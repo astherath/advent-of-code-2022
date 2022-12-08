@@ -13,7 +13,9 @@ def create(day: int) -> None:
     os.system(f"mkdir {day_str}")
     os.system(f"mv 'input.txt' {day_str}")
 
-    os.system(f"cd {day_str}")
+    os.chdir(day_str)
+    os.system(f"cargo init --name 'aoc_{day_str}'")
+    os.system('echo \'common = {path = "../common"}\' >> Cargo.toml')
 
 if __name__ == '__main__':
     fire.Fire(create)
