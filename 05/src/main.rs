@@ -62,7 +62,10 @@ impl Direction {
         let mut nums = line
             .chars()
             .filter(|x| x.is_alphanumeric())
-            .map(|x| x.to_string().parse::<usize>().unwrap());
+            .map(|x| {
+                dbg!(x);
+                x.to_string().parse::<usize>().unwrap()
+            });
         let (amount, from, to) = (
             nums.next().unwrap(),
             nums.next().unwrap(),
