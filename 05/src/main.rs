@@ -1,8 +1,9 @@
 use common::read_input;
-const DIR_PATH: &'static str = "test_dir.txt";
-// const DIR_PATH: &'static str = "directions.txt";
-// const STACK_PATH: &'static str = "stack.txt";
-const STACK_PATH: &'static str = "test_stack.txt";
+const BUCKET_SIZE: usize = 9;
+const DIR_PATH: &'static str = "directions.txt";
+const STACK_PATH: &'static str = "stack.txt";
+// const DIR_PATH: &'static str = "test_dir.txt";
+// const STACK_PATH: &'static str = "test_stack.txt";
 fn main() {
     let directions_strings = read_input(DIR_PATH)
         .unwrap()
@@ -17,13 +18,11 @@ fn main() {
         .map(|x| Direction::from(&x))
         .collect();
 
-    dbg!(&stacks);
     let mut crane = Crane::new(stacks);
     for direction in directions {
         crane.move_crate(direction);
     }
-    let stacks_s = crane.inner();
-    dbg!(&stacks_s);
+    crane.display_tops();
 }
 
 struct Crane {
@@ -32,21 +31,33 @@ struct Crane {
 
 impl Crane {
     fn new(stacks: Vec<Stack>) -> Self {
-        Self {
-            stacks
-        }
+        Self { stacks }
     }
 
     fn move_crate(&mut self, direction: Direction) {
+        let mut tmp = vec![];
+        dbg!(&self.stacks[direction.from]);
         for _ in 0..direction.amount {
             let mut c_crate = self.stacks[direction.from].pop();
             c_crate.swap(direction.to);
-            self.stacks[direction.to].push(c_crate);
+            tmp.push(c_crate);
         }
+        dbg!(&tmp);
+
+        tmp.into_iter()
+            .rev()
+            .for_each(|x| self.stacks[direction.to].push(x));
+        dbg!(&self.stacks[direction.to]);
     }
 
     fn inner(self) -> Vec<Stack> {
         self.stacks
+    }
+
+    fn display_tops(self) {
+        for stack in self.stacks {
+            dbg!(&stack.get_top());
+        }
     }
 }
 
@@ -59,17 +70,18 @@ struct Direction {
 
 impl Direction {
     fn from(line: &str) -> Self {
-        let mut nums = line
-            .chars()
-            .filter(|x| x.is_alphanumeric())
-            .map(|x| {
-                dbg!(x);
-                x.to_string().parse::<usize>().unwrap()
-            });
+        let rep_str = line
+            .replace("move ", "")
+            .replace("from ", "")
+            .replace("to ", "");
+        let mut nums = rep_str
+            .split(" ")
+            .filter(|x| x.to_string().parse::<usize>().is_ok())
+            .map(|x| x.to_string().parse::<usize>().unwrap());
         let (amount, from, to) = (
             nums.next().unwrap(),
-            nums.next().unwrap(),
-            nums.next().unwrap(),
+            nums.next().unwrap() - 1,
+            nums.next().unwrap() - 1,
         );
         Self { amount, from, to }
     }
@@ -103,11 +115,20 @@ impl Stack {
     }
 
     fn pop(&mut self) -> Crate {
-        self.crates.pop().unwrap()
+        match self.crates.pop() {
+            Some(val) => val,
+            None => {
+                panic!();
+            }
+        }
     }
 
     fn push(&mut self, c_crate: Crate) {
         self.crates.push(c_crate);
+    }
+
+    fn get_top(&self) -> Option<&Crate> {
+        self.crates.iter().last()
     }
 }
 
@@ -121,7 +142,6 @@ fn get_stacks() -> Vec<Stack> {
 
 fn get_stack_str() -> Vec<String> {
     const MARKER: char = '0';
-    const BUCKET_SIZE: usize = 9;
 
     let mut stack_raw: Vec<Vec<char>> = vec![];
 
